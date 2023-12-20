@@ -20,10 +20,10 @@ def start(message):
     # Просто добавить кнопку
     # markup.add(types.KeyboardButton('Нажми на меня'))
     # Разместить кнопки по рядам
-    btn1 = types.KeyboardButton('Завтра')
+    btn1 = types.KeyboardButton('Донат')
     btn2 = types.KeyboardButton('Другая дата')
     markup.row(btn1, btn2)
-    btn3 = types.KeyboardButton('Донат')
+    btn3 = types.KeyboardButton('Завтра')
     # btn4 = types.KeyboardButton('Дз за всё (учебное) время')
     markup.row(btn3) #, btn4
     # markup.add(btn1, btn2, btn3, btn4) - просто добавить кнопки в markup
