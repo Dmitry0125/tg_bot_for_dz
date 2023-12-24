@@ -2,6 +2,10 @@ import telebot
 from tg_token import token
 from telebot import types # модуль для кнопок бота
 import time
+# print(time.time()) # узнать время
+# print(int(time.mktime(time.strptime('2023-12-18 01:05:00', '%Y-%m-%d %H:%M:%S')))) # перевести время из человекопонятного в UNIX
+# https://i-leon.ru/tools/time - Unix time конвертер (Конвертер времени Unix онлайн) С ИНСТРУКЦИЯМИ И ОБЪЯСНЕНИЯМИ!
+
 # ниже попытка использования актуального времени
 '''
 import pytz # модуль для смены часового пояса https://andreyex.ru/programmirovanie/python/kak-ispolzovat-modul-pytz-v-python/
