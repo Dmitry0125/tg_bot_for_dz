@@ -62,6 +62,7 @@ print(type(all_dz))
 @bot.message_handler(content_types=['text'])
 def on_click(message):
     current_date = time.strftime("%d.%m", time.localtime(message.date)) # вывод даты строкой в формате ДД.ММ
+    # https: // docs - python.ru / standart - library / modul - datetime - python / kody - formatirovanija - strftime - strptime - modulja - datetime / - статья о форматах и %d и т.д
     def read_dz_technical(date):  # функция составления и высылания домашки из файла
         need_dz = ''  # нельзя делать эту переменную пустой строкой - программа ругается, что не может отправить пустую строку!!!
         for i in range(57):  # после большего кол-ва дз будет range(96) - написал ниже почему!)
