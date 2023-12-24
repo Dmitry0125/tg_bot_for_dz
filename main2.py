@@ -1,6 +1,9 @@
 import telebot
 from tg_token import token
 from telebot import types # модуль для кнопок бота
+import time
+# ниже попытка использования актуального времени
+'''
 import pytz # модуль для смены часового пояса https://andreyex.ru/programmirovanie/python/kak-ispolzovat-modul-pytz-v-python/
 from datetime import datetime # https://otus.ru/journal/tekushhaya-data-i-vremya-v-python/ - Хорошая статья про библиотеку datetime
 # Не осуществилась идея ниже, т.к. тогда надо чтобы в файлике тоже было столько же видов символов между числом и месяцом ИЛИ какая то другая проверка (например по index смотреть число до нужного нам знака пунктуации но тогда нужно много .index() т.к в аргумент этой функции нельзя запихать много символов)
@@ -11,6 +14,7 @@ tz = pytz.timezone('Etc/GMT-7')
 # https://qna.habr.com/q/1237780 - статья в которой была подсказка про UTF+7 + про форматы даты и времени
 krasnoyarsk_current_datetime = datetime.now(tz)
 # print(datetime.isoweekday(krasnoyarsk_current_datetime)) # если .weekday(now) - понедельник - 0, воскресенье - 6; если isoweekday(now) - понедельник - 1, воскресенье - 7 https://ru.stackoverflow.com/questions/1247680/%D0%94%D0%B5%D0%BD%D1%8C-%D0%BD%D0%B5%D0%B4%D0%B5%D0%BB%D0%B8-%D0%BF%D0%BE-%D0%B4%D0%B0%D1%82%D0%B5-%D0%B2-python
+'''
 
 bot = telebot.TeleBot(token)
 
@@ -53,6 +57,7 @@ print(type(all_dz))
 
 @bot.message_handler(content_types=['text'])
 def on_click(message):
+    current_date = time.strftime("%d.%m", time.localtime(message.date)) # вывод даты строкой в формате ДД.ММ
     def read_dz_technical(date):  # функция составления и высылания домашки из файла
         need_dz = ''  # нельзя делать эту переменную пустой строкой - программа ругается, что не может отправить пустую строку!!!
         for i in range(57):  # после большего кол-ва дз будет range(96) - написал ниже почему!)
@@ -82,7 +87,7 @@ def on_click(message):
 
     # Обработка кнопок под вводом сообщения
     if message.text.lower() == 'завтра':
-        read_dz_technical(str(krasnoyarsk_current_datetime.day + 1) + '.' + str(krasnoyarsk_current_datetime.month))
+        read_dz_technical(str(int(current_date[:2])+1)+current_date[2:])
     elif message.text.lower() == 'другая дата':
         bot.send_message(message.chat.id, 'Введи дату на которую хочешь узнать дз в формате ДД.ММ')
     # elif message.text.lower() == 'дз за всё (учебное) время':
