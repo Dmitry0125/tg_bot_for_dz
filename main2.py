@@ -21,7 +21,8 @@ krasnoyarsk_current_datetime = datetime.now(tz)
 '''
 
 bot = telebot.TeleBot(token)
-
+# привет
+# как дела?
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)  # resize_keyboard = True - чтобы в чате красиво отображались кнопки
