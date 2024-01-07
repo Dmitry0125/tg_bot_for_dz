@@ -2,6 +2,7 @@ import telebot
 from tg_token import token
 from telebot import types # модуль для кнопок бота
 import time
+# from rassilca import * # подключение текстового файла с ID пользователей для рассылки и управление им
 # print(time.time()) # узнать время
 # print(int(time.mktime(time.strptime('2023-12-18 01:05:00', '%Y-%m-%d %H:%M:%S')))) # перевести время из человекопонятного в UNIX
 # https://i-leon.ru/tools/time - Unix time конвертер (Конвертер времени Unix онлайн) С ИНСТРУКЦИЯМИ И ОБЪЯСНЕНИЯМИ!
@@ -40,6 +41,50 @@ def start(message):
 
 # В видео Гоши Дударя https://youtu.be/RpiWnPNTeww?si=1nnEh1twqoZmnOVH&t=977 Говориться о добавлении строчки bot.register_next_step_handler(message, on_clic), но она реагирует на кнопку лишь один раз.
 # Поэтому, посмотрев видео https://youtu.be/LnherAK6NFA?si=sesjKyTM5BVLgfkV&t=533, пришёл к выводу, что проще сделать декоратор @bot.message_handler(content_types=['text']), который сможет обрабатывать сообщения чата, в которого будут отправлятся сообщения-команды после нажатия кнопок
+
+joinedFile = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedID.txt', 'r')
+joinedUsers = set()
+for line in joinedFile:
+    joinedUsers.add(line.strip())
+joinedFile.close()
+
+joinedFile1 = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedName.txt', 'r')
+joinedUsers1 = set()
+for line in joinedFile1:
+    joinedUsers1.add(line.strip())
+joinedFile1.close()
+
+@bot.message_handler(commands=['rassilca'])
+def rassilca(message):
+    if not str(message.chat.id) in joinedUsers:
+        joinedFile = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedID.txt', 'a')
+        joinedFile.write(str(message.chat.id) + '\n')
+        joinedUsers.add(message.chat.id)
+        joinedFile.close()
+        bot.send_message(message.chat.id, 'Ты успешно зарегистрирован на рассылку!)')
+    # пока вроде не работает(
+    # else:
+    #     bot.send_message(message.chat.id, 'Ты уже подписан на рассылку)')
+
+    # Добавлять Имя и Фамилию
+    # if not (message.chat.first_name + message.chat.last_name) in joinedUsers1:
+    #     joinedFile1 = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedName.txt', 'a')
+    #     joinedFile1.write((message.chat.first_name + message.chat.last_name) + '\n')
+    #     joinedUsers1.add(message.chat.first_name + message.chat.last_name)
+    #     joinedFile1.close()
+
+    if not str(message.chat.id) in joinedUsers1:
+        joinedFile1 = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedName.txt', 'a')
+        joinedFile1.write(f'id: {message.chat.id}; first_name: {message.chat.first_name}; last_name: {message.chat.last_name}; username: {message.chat.username}; date: {message.date}; is_bot: {message.from_user.is_bot}; is_premium: {message.from_user.is_premium}; language_code: {message.from_user.language_code}; message_id: {message.message_id}; text: {message.text}' + '\n')
+        joinedUsers1.add(message.chat.first_name + message.chat.last_name)
+        joinedFile1.close()
+
+
+
+@bot.message_handler(commands=['special'])
+def mess(message):
+    for user in joinedUsers:
+        bot.send_message(user, message.text[message.text.find(' '):])
 
 @bot.message_handler(commands=['help'])
 def main(message):
@@ -85,7 +130,7 @@ def on_click(message):
             bot.send_message(message.chat.id, 'Разраб пока не внёс дз на эту дату. Можешь попробовать поторопить его в лс, но не советую😅 (у него наверное дела, не успевает немного...). Заранее приносит сильные извинения!')  # т.к. последний символ '\n', а он нам не нужен
 
     def check():  # проверка что начало сообщения это дата, чтобы не писать много текста в условие
-        if (message.text[:2].isdigit() and message.text[2] == '.' and message.text[3:5].isdigit()) or (message.text[:1].isdigit() and message.text[1] == '.' and message.text[2:4].isdigit()):  # без .isdigit() не работает! # это условие если человек введёт любую дату года. Надо подумать, как сделать чтобы были даты только учебного года!
+        if message.text[:2].isdigit() and message.text[2] == '.' and message.text[3:5].isdigit(): # без .isdigit() не работает! # это условие если человек введёт любую дату года. Надо подумать, как сделать чтобы были даты только учебного года!
             # В верхнем условии первая скобка отвечает за проверку формата ДД.ММ, а вторая за Д.ММ
             # в будущем в message.text.lower()[2]=='.' можно добавить не только точку, но и другие знаки. Например, в начале проги есть переменная со всем служебными символами, и тут просто идёт проверка, есть ли message.text.lower()[2] в списке этих символов
             return True
@@ -116,6 +161,17 @@ def on_click(message):
         bot.reply_to(message, f'ID: {message.from_user.id}')
     elif message.text.lower() == 'message':  # команда только для меня!
         bot.send_message(message.chat.id, message)
+    elif message.text.lower() == 'зимние каникулы':
+        bot.send_message(message.chat.id, 'Литература:\n'
+                         '- Большие произведения на 2 полугодие:\n'
+                         '-- "Тихий Дон"\n'
+                         '-- рассказы Шаламова\n'
+                         '-- "Мастер и Маргарита"\n'
+                         '- Стихи:\n'
+                         '-- Есенин: "Гой ты Русь моя родная" + 1 на выбор + 1 любовная лирика\n'
+                         '-- Маяковский: 1 любое на выбор\n'
+                         'Информатика: есть в вк в группе "11 проф. математика 134"\n'
+                         'Физика: есть в тг в группе "11 ЕГЭ"')
     # Ответ на неопределённое сообщение
     else:
         bot.send_message(message.chat.id, 'К сожалению, я не знаю как отвечать на такое сообщение( Обратись к разработчику (команда "/help") и опиши свою проблему, чтобы я совершенствовался и был ещё лучше для вас)')
