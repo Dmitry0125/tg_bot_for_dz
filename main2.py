@@ -86,6 +86,17 @@ def mess(message):
     for user in joinedUsers:
         bot.send_message(user, message.text[message.text.find(' '):])
 
+@bot.message_handler(commands=['write'])
+def write(message):
+    with open('dz_technical_class.txt', 'r+') as file:
+        content = file.read()  # Чтение
+        file.seek(0)  # Переход в начало файла
+        file.write(message.text[message.text.find(' ')+1:]+'\n')  # Запись новой строки
+        file.write(content)  # Запись старого содержимого
+        # file.seek(0)
+        # d = file.read()
+    # print(d)
+
 @bot.message_handler(commands=['help'])
 def main(message):
     bot.send_message(message.chat.id,
