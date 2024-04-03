@@ -86,6 +86,8 @@ def mess(message):
     for user in joinedUsers:
         bot.send_message(user, message.text[message.text.find(' '):])
 
+# https://ru.stackoverflow.com/questions/1197138/%D0%94%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D1%82%D1%8C-%D1%81%D1%82%D1%80%D0%BE%D0%BA%D0%B8-%D0%B2-%D0%BD%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%BD%D0%B0-python - подсказка способа записи в начало файла с StackOverflow
+# https://sky.pro/media/razlichiya-mezhdu-rezhimami-a-a-w-w-i-r-vo-vstroennoj-funkczii-open-v-python/ - объяснение различий между методами работы с файлом ("mode =" в "open()") r+, a+, w+ и т.д
 @bot.message_handler(commands=['write'])
 def write(message):
     with open('dz_technical_class.txt', 'r+') as file:
@@ -148,7 +150,8 @@ def on_click(message):
 
     # Обработка кнопок под вводом сообщения
     if message.text.lower() == 'завтра':
-        read_dz_technical(str(int(current_date[:2])+1)+current_date[2:])
+        date = str(int(current_date[:2]) + 1) + current_date[2:] if len(str(int(current_date[:2]))) > 1 else '0' + str(int(current_date[:2]) + 1) + current_date[2:] # это чтобы например 4.04 превращалось в 04.04
+        read_dz_technical(date)
     elif message.text.lower() == 'другая дата':
         bot.send_message(message.chat.id, 'Введи дату на которую хочешь узнать дз в формате ДД.ММ')
     # elif message.text.lower() == 'дз за всё (учебное) время':
