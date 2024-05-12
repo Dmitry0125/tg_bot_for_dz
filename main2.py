@@ -44,7 +44,7 @@ def registration(message):
     conn = sqlite3.connect('users.sql')
     cur = conn.cursor()
 
-    cur.execute('CREATE TABLE IF NOT EXISTS users (name varchar(50), id_tg varchar(50))')
+    cur.execute('CREATE TABLE IF NOT EXISTS users (name varchar(50), id_tg varchar(50), first_name varchar(50), last_name varchar(50), username varchar(50), date varchar(50), is_premium varchar(50))')
     conn.commit()
     cur.close()
     conn.close()
@@ -55,10 +55,15 @@ def registration(message):
 def user_name(message):
     name = message.text.strip()
     id_tg = message.from_user.id
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name
+    username = message.from_user.username
+    date = message.date #https://i-leon.ru/tools/time
+    is_premium = message.from_user.is_premium
     conn = sqlite3.connect('users.sql')
     cur = conn.cursor()
 
-    cur.execute("INSERT INTO users (name, id_tg) VALUES ('%s', '%s')" % (name, id_tg))
+    cur.execute("INSERT INTO users (name, id_tg, first_name, last_name, username, date, is_premium) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (name, id_tg, first_name, last_name, username, date, is_premium))
     conn.commit()
     cur.close()
     conn.close()
@@ -163,7 +168,7 @@ def on_click(message):
         else:
             bot.send_message(message.chat.id, 'Разраб пока не внёс дз на эту дату. Можешь попробовать поторопить его в лс, но не советую😅 (у него наверное дела, не успевает немного...). Заранее приносит сильные извинения!')  # т.к. последний символ '\n', а он нам не нужен
 
-    def check():  # проверка что начало сообщения это дата, чтобы не писать много текста в условие
+    def check():  # проверка того что начало сообщения это дата, чтобы не писать много текста в условие
         if message.text[:2].isdigit() and message.text[2] == '.' and message.text[3:5].isdigit(): # без .isdigit() не работает! # это условие если человек введёт любую дату года. Надо подумать, как сделать чтобы были даты только учебного года!
             # В верхнем условии первая скобка отвечает за проверку формата ДД.ММ, а вторая за Д.ММ
             # в будущем в message.text.lower()[2]=='.' можно добавить не только точку, но и другие знаки. Например, в начале проги есть переменная со всем служебными символами, и тут просто идёт проверка, есть ли message.text.lower()[2] в списке этих символов
@@ -317,6 +322,7 @@ def on_click(message):
         bot.reply_to(message, f'ID: {message.from_user.id}')
     elif message.text.lower() == 'message':  # команда только для меня!
         bot.send_message(message.chat.id, message)
+        # Красивый вывод делай через terminal с помощью from pprint import pprint и pprint()! https://qna.habr.com/q/260188
     elif message.text.lower() == 'зимние каникулы':
         bot.send_message(message.chat.id, 'Литература:\n'
                          '- Большие произведения на 2 полугодие:\n'
