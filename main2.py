@@ -63,12 +63,23 @@ def user_name(message):
     cur.close()
     conn.close()
 
-    markup = telebot.types.InlineKeyboardMarkup()
-    markup.add(telebot.types.InlineKeyboardButton('Список пользователей', callback_data='users'))
-    bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
+    bot.send_message(message.chat.id, 'Пользователь зарегестрирован!')
 
-@bot.callback_query_handler(func = lambda call: True)
-def callback(call):
+# В видео Гоши Дударя https://youtu.be/RpiWnPNTeww?si=1nnEh1twqoZmnOVH&t=977 Говориться о добавлении строчки bot.register_next_step_handler(message, on_clic), но она реагирует на кнопку лишь один раз.
+# Поэтому, посмотрев видео https://youtu.be/LnherAK6NFA?si=sesjKyTM5BVLgfkV&t=533, пришёл к выводу, что проще сделать декоратор @bot.message_handler(content_types=['text']), который сможет обрабатывать сообщения чата, в которого будут отправлятся сообщения-команды после нажатия кнопок
+
+@bot.message_handler(commands=['special'])
+def mess(message):
+    current_date = time.strftime("%d.%m", time.localtime(message.date))  # вывод даты строкой в формате ДД.ММ
+    date = str(int(current_date[:2]) + 1) + current_date[2:] if len(str(int(current_date[:2]))) > 1 else '0' + str(int(current_date[:2]) + 1) + current_date[2:]
+    def read_dz_technical(date):  # функция составления и высылания домашки из файла
+        need_dz = ''
+        for i in range(96):
+            if datef[i][:5] == date:
+                need_dz += datef[i][6:]
+            elif datef[i][:4] == date:
+                need_dz += datef[i][5:]
+        return need_dz
     global users
     conn = sqlite3.connect('users.sql')
     cur = conn.cursor()
@@ -76,27 +87,28 @@ def callback(call):
     cur.execute('SELECT * FROM users')
     users = cur.fetchall()
 
-    info = ''
-    for el in users:
-        info += f'Имя: {el[0]}, id_tg: {el[1]}\n'
+    cur.close()
+    conn.close()
+    for user in users:
+        bot.send_message(user[1], read_dz_technical(date))
+
+@bot.message_handler(commands=['my_special_message'])
+def mess(message):
+    global users
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute('SELECT * FROM users')
+    users = cur.fetchall()
 
     cur.close()
     conn.close()
-
-    bot.send_message(call.message.chat.id, info)
-
-
-# В видео Гоши Дударя https://youtu.be/RpiWnPNTeww?si=1nnEh1twqoZmnOVH&t=977 Говориться о добавлении строчки bot.register_next_step_handler(message, on_clic), но она реагирует на кнопку лишь один раз.
-# Поэтому, посмотрев видео https://youtu.be/LnherAK6NFA?si=sesjKyTM5BVLgfkV&t=533, пришёл к выводу, что проще сделать декоратор @bot.message_handler(content_types=['text']), который сможет обрабатывать сообщения чата, в которого будут отправлятся сообщения-команды после нажатия кнопок
-
-@bot.message_handler(commands=['special'])
-def mess(message):
-    global users
     for user in users:
         bot.send_message(user[1], message.text[message.text.find(' '):])
 
 # https://ru.stackoverflow.com/questions/1197138/%D0%94%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D1%82%D1%8C-%D1%81%D1%82%D1%80%D0%BE%D0%BA%D0%B8-%D0%B2-%D0%BD%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%BD%D0%B0-python - подсказка способа записи в начало файла с StackOverflow
 # https://sky.pro/media/razlichiya-mezhdu-rezhimami-a-a-w-w-i-r-vo-vstroennoj-funkczii-open-v-python/ - объяснение различий между методами работы с файлом ("mode =" в "open()") r+, a+, w+ и т.д
+
 @bot.message_handler(commands=['write'])
 def write(message):
     with open('dz_technical_class.txt', 'r+') as file:
