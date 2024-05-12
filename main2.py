@@ -6,7 +6,7 @@ import time
 # print(time.time()) # узнать время
 # print(int(time.mktime(time.strptime('2023-12-18 01:05:00', '%Y-%m-%d %H:%M:%S')))) # перевести время из человекопонятного в UNIX
 # https://i-leon.ru/tools/time - Unix time конвертер (Конвертер времени Unix онлайн) С ИНСТРУКЦИЯМИ И ОБЪЯСНЕНИЯМИ!
-
+import sqlite3
 # ниже попытка использования актуального времени
 '''
 import pytz # модуль для смены часового пояса https://andreyex.ru/programmirovanie/python/kak-ispolzovat-modul-pytz-v-python/
@@ -22,7 +22,7 @@ krasnoyarsk_current_datetime = datetime.now(tz)
 '''
 
 bot = telebot.TeleBot(token)
-
+users = None
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)  # resize_keyboard = True - чтобы в чате красиво отображались кнопки
@@ -39,53 +39,61 @@ def start(message):
     # markup.add(btn1, btn2, btn3, btn4) - просто добавить кнопки в markup
     bot.send_message(message.chat.id, 'Привет. На какой день недели хочешь узнать дз?)', reply_markup = markup)
 
+@bot.message_handler(commands=['rassilca'])
+def registration(message):
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute('CREATE TABLE IF NOT EXISTS users (name varchar(50), id_tg varchar(50))')
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    bot.send_message(message.chat.id, 'Привет, сейчас тебя зарегестрируем! Введите ваше имя')
+    bot.register_next_step_handler(message, user_name)
+
+def user_name(message):
+    name = message.text.strip()
+    id_tg = message.from_user.id
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute("INSERT INTO users (name, id_tg) VALUES ('%s', '%s')" % (name, id_tg))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton('Список пользователей', callback_data='users'))
+    bot.send_message(message.chat.id, 'Пользователь зарегестрирован!', reply_markup=markup)
+
+@bot.callback_query_handler(func = lambda call: True)
+def callback(call):
+    global users
+    conn = sqlite3.connect('users.sql')
+    cur = conn.cursor()
+
+    cur.execute('SELECT * FROM users')
+    users = cur.fetchall()
+
+    info = ''
+    for el in users:
+        info += f'Имя: {el[0]}, id_tg: {el[1]}\n'
+
+    cur.close()
+    conn.close()
+
+    bot.send_message(call.message.chat.id, info)
+
 
 # В видео Гоши Дударя https://youtu.be/RpiWnPNTeww?si=1nnEh1twqoZmnOVH&t=977 Говориться о добавлении строчки bot.register_next_step_handler(message, on_clic), но она реагирует на кнопку лишь один раз.
 # Поэтому, посмотрев видео https://youtu.be/LnherAK6NFA?si=sesjKyTM5BVLgfkV&t=533, пришёл к выводу, что проще сделать декоратор @bot.message_handler(content_types=['text']), который сможет обрабатывать сообщения чата, в которого будут отправлятся сообщения-команды после нажатия кнопок
 
-joinedFile = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedID.txt', 'r')
-joinedUsers = set()
-for line in joinedFile:
-    joinedUsers.add(line.strip())
-joinedFile.close()
-
-joinedFile1 = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedName.txt', 'r')
-joinedUsers1 = set()
-for line in joinedFile1:
-    joinedUsers1.add(line.strip())
-joinedFile1.close()
-
-@bot.message_handler(commands=['rassilca'])
-def rassilca(message):
-    if not str(message.chat.id) in joinedUsers:
-        joinedFile = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedID.txt', 'a')
-        joinedFile.write(str(message.chat.id) + '\n')
-        joinedUsers.add(message.chat.id)
-        joinedFile.close()
-        bot.send_message(message.chat.id, 'Ты успешно зарегистрирован на рассылку!)')
-    # пока вроде не работает(
-    # else:
-    #     bot.send_message(message.chat.id, 'Ты уже подписан на рассылку)')
-
-    # Добавлять Имя и Фамилию
-    # if not (message.chat.first_name + message.chat.last_name) in joinedUsers1:
-    #     joinedFile1 = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedName.txt', 'a')
-    #     joinedFile1.write((message.chat.first_name + message.chat.last_name) + '\n')
-    #     joinedUsers1.add(message.chat.first_name + message.chat.last_name)
-    #     joinedFile1.close()
-
-    if not str(message.chat.id) in joinedUsers1:
-        joinedFile1 = open('/home/dmitry/Projects/Botдлядомашкиv.2/joinedName.txt', 'a')
-        joinedFile1.write(f'id: {message.chat.id}; first_name: {message.chat.first_name}; last_name: {message.chat.last_name}; username: {message.chat.username}; date: {message.date}; is_bot: {message.from_user.is_bot}; is_premium: {message.from_user.is_premium}; language_code: {message.from_user.language_code}; message_id: {message.message_id}; text: {message.text}' + '\n')
-        joinedUsers1.add(message.chat.first_name + message.chat.last_name)
-        joinedFile1.close()
-
-
-
 @bot.message_handler(commands=['special'])
 def mess(message):
-    for user in joinedUsers:
-        bot.send_message(user, message.text[message.text.find(' '):])
+    global users
+    for user in users:
+        bot.send_message(user[1], message.text[message.text.find(' '):])
 
 # https://ru.stackoverflow.com/questions/1197138/%D0%94%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D1%82%D1%8C-%D1%81%D1%82%D1%80%D0%BE%D0%BA%D0%B8-%D0%B2-%D0%BD%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D1%84%D0%B0%D0%B9%D0%BB%D0%B0-%D0%BD%D0%B0-python - подсказка способа записи в начало файла с StackOverflow
 # https://sky.pro/media/razlichiya-mezhdu-rezhimami-a-a-w-w-i-r-vo-vstroennoj-funkczii-open-v-python/ - объяснение различий между методами работы с файлом ("mode =" в "open()") r+, a+, w+ и т.д
