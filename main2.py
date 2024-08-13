@@ -6,7 +6,7 @@ import time
 # print(time.time()) # узнать время
 # print(int(time.mktime(time.strptime('2023-12-18 01:05:00', '%Y-%m-%d %H:%M:%S')))) # перевести время из человекопонятного в UNIX
 # https://i-leon.ru/tools/time - Unix time конвертер (Конвертер времени Unix онлайн) С ИНСТРУКЦИЯМИ И ОБЪЯСНЕНИЯМИ!
-import sqlite3
+from sqlite3 import connect
 # ниже попытка использования актуального времени
 '''
 import pytz # модуль для смены часового пояса https://andreyex.ru/programmirovanie/python/kak-ispolzovat-modul-pytz-v-python/
@@ -41,15 +41,21 @@ def start(message):
 
 @bot.message_handler(commands=['rassilca'])
 def registration(message):
-    conn = sqlite3.connect('users.sql')
-    cur = conn.cursor()
+    with connect("users.sql") as con:
+        cur = con.cursor()
 
-    cur.execute('CREATE TABLE IF NOT EXISTS users (name varchar(50), id_tg varchar(50), first_name varchar(50), last_name varchar(50), username varchar(50), date varchar(50), is_premium varchar(50))')
-    conn.commit()
-    cur.close()
-    conn.close()
+        cur.execute("""CREATE TABLE IF NOT EXISTS users (
+            name varchar(50), 
+            id_tg varchar(50), 
+            first_name varchar(50), 
+            last_name varchar(50), 
+            username varchar(50), 
+            date varchar(50), 
+            is_premium varchar(50))""")
 
-    bot.send_message(message.chat.id, 'Привет, сейчас тебя зарегестрируем! Введите ваше имя')
+        con.commit()
+
+    bot.send_message(message.chat.id, 'Привет, сейчас тебя зарегистрируем! Введите ваше имя')
     bot.register_next_step_handler(message, user_name)
 
 def user_name(message):
@@ -60,15 +66,21 @@ def user_name(message):
     username = message.from_user.username
     date = message.date #https://i-leon.ru/tools/time
     is_premium = message.from_user.is_premium
-    conn = sqlite3.connect('users.sql')
-    cur = conn.cursor()
+    con = connect('users.sql')
+    cur = con.cursor()
 
-    cur.execute("INSERT INTO users (name, id_tg, first_name, last_name, username, date, is_premium) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (name, id_tg, first_name, last_name, username, date, is_premium))
-    conn.commit()
+    cur.execute("SELECT id_tg from users")
+    a = cur.fetchall()
+    a = [int(*i) for i in a] # делаем список из id для будущей проверки вхождения. По хорошему, с самого начала нужно с помощью in проверять вхождение id в столбец id_tg таблицы, чтобы быстрее получить ответ при неполном обходе столбца. Но я не смог сделать схожие типы данных (tuple и tuple), поэтому решил всё сделать к int и потом уже сравнивать. При больших объёмах данных может быть долго, но работать будет.
+    if id_tg not in a:
+        cur.execute("INSERT INTO users (name, id_tg, first_name, last_name, username, date, is_premium) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')" % (name, id_tg, first_name, last_name, username, date, is_premium))
+        bot.send_message(message.chat.id, 'Пользователь зарегистрирован!')
+    else:
+        bot.send_message(message.chat.id, 'Пользователь уже зарегистрирован!')
+
+    con.commit()
     cur.close()
-    conn.close()
-
-    bot.send_message(message.chat.id, 'Пользователь зарегестрирован!')
+    con.close()
 
 # В видео Гоши Дударя https://youtu.be/RpiWnPNTeww?si=1nnEh1twqoZmnOVH&t=977 Говориться о добавлении строчки bot.register_next_step_handler(message, on_clic), но она реагирует на кнопку лишь один раз.
 # Поэтому, посмотрев видео https://youtu.be/LnherAK6NFA?si=sesjKyTM5BVLgfkV&t=533, пришёл к выводу, что проще сделать декоратор @bot.message_handler(content_types=['text']), который сможет обрабатывать сообщения чата, в которого будут отправлятся сообщения-команды после нажатия кнопок
@@ -86,28 +98,28 @@ def mess(message):
                 need_dz += datef[i][5:]
         return need_dz
     global users
-    conn = sqlite3.connect('users.sql')
-    cur = conn.cursor()
+    con = connect('users.sql')
+    cur = con.cursor()
 
     cur.execute('SELECT * FROM users')
     users = cur.fetchall()
 
     cur.close()
-    conn.close()
+    con.close()
     for user in users:
         bot.send_message(user[1], read_dz_technical(date))
 
 @bot.message_handler(commands=['my_special_message'])
 def mess(message):
     global users
-    conn = sqlite3.connect('users.sql')
-    cur = conn.cursor()
+    con = connect('users.sql')
+    cur = con.cursor()
 
     cur.execute('SELECT * FROM users')
     users = cur.fetchall()
 
     cur.close()
-    conn.close()
+    con.close()
     for user in users:
         bot.send_message(user[1], message.text[message.text.find(' '):])
 
